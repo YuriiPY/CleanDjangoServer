@@ -1,74 +1,73 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react"
 
-// Type of response from FastAPI: { "text": "Hello world" }
 type HelloResponse = {
-  text: string | null;
-};
+    text: string
+}
 
-// Read API URL from env (Docker-friendly)
+type MessagesResponse = HelloResponse[]
+
 const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8000"; // fallback for local dev
+    import.meta.env.VITE_API_URL || "http://localhost:8000"
 
 const App: React.FC = () => {
-  const [data, setData] = useState<HelloResponse | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+    const [data, setData] = useState<HelloResponse | null>(null)
+    const [loading, setLoading] = useState<boolean>(true)
+    const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const fetchHello = async () => {
-      try {
-        const res = await fetch(`${API_URL}/`);
+    useEffect(() => {
+        const fetchHello = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/messages/`)
 
-        if (!res.ok) {
-          throw new Error(`Request failed with status ${res.status}`);
+                if (!res.ok) {
+                    throw new Error(`Request failed with status ${res.status}`)
+                }
+
+                const json: MessagesResponse = await res.json()
+                setData(json.length > 0 ? json[0] : null)
+            } catch (err: unknown) {
+                if (err instanceof Error) {
+                    setError(err.message)
+                } else {
+                    setError("Unknown error")
+                }
+            } finally {
+                setLoading(false)
+            }
         }
 
-        const json: HelloResponse = await res.json();
-        setData(json);
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("Unknown error");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
+        fetchHello()
+    }, [])
+    if (loading) {
+        return <div style={{ fontFamily: "sans-serif" }}>Loading…</div>
+    }
 
-    fetchHello();
-  }, []);
+    if (error) {
+        return (
+            <div style={{ fontFamily: "sans-serif", color: "red" }}>
+                Error: {error}
+            </div>
+        )
+    }
 
-  if (loading) {
-    return <div style={{ fontFamily: "sans-serif" }}>Loading…</div>;
-  }
-
-  if (error) {
     return (
-      <div style={{ fontFamily: "sans-serif", color: "red" }}>
-        Error: {error}
-      </div>
-    );
-  }
+        <div
+            style={{
+                fontFamily: "sans-serif",
+                minHeight: "100vh",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "column",
+                gap: "0.5rem",
+            }}
+        >
+            <h1>Text from backend</h1>
+            <p>
+                {data?.text ?? <i>No text in database</i>}
+            </p>
+        </div>
+    )
+}
 
-  return (
-    <div
-      style={{
-        fontFamily: "sans-serif",
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "column",
-        gap: "0.5rem",
-      }}
-    >
-      <h1>Text from backend</h1>
-      <p>
-        {data?.text ?? <i>No text in database</i>}
-      </p>
-    </div>
-  );
-};
-
-export default App;
+export default App
