@@ -5,7 +5,10 @@ WORKDIR /app
 COPY my-react-app/package*.json ./
 RUN npm install
 
-COPY . .
+COPY my-react-app/ .
+RUN chown -R node:node /app
+
+USER node
 
 EXPOSE 3000
 
